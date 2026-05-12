@@ -559,9 +559,9 @@ function renderSummary() {
 }
 
 function copyRoomLink() {
-  const url = window.location.href;
+  const url = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
   navigator.clipboard.writeText(url).then(() => {
-    alert('✅ คัดลอก link แล้ว! ส่งให้เพื่อนได้เลย');
+    alert('✅ คัดลอก link แล้ว! ส่งให้เพื่อนได้เลย\n\nLink: ' + url);
   });
 }
 
