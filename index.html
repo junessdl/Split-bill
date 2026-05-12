@@ -549,6 +549,21 @@ padding:20px;
       ">
     </div>
 
+<input
+  type="file"
+  id="slipUpload"
+  accept="image/*"
+  style="margin-top:16px;"
+>
+
+<button
+  class="btn"
+  style="margin-top:12px;"
+  onclick="submitSlip()">
+
+  ✅ จ่ายแล้ว
+</button>
+
     <button
       class="btn"
       style="margin-top:16px;"
@@ -583,6 +598,8 @@ let selectedPayer = null;
 let selectedSplit = new Set();
 
 let tipPct = 0;
+let currentReceiver = null;
+let currentAmount = 0;
 
 window.onload = () => {
 
@@ -1078,6 +1095,9 @@ function showQR(receiverName,amount){
     return;
   }
 
+  currentReceiver = receiverName;
+  currentAmount = amount;
+
   document.getElementById('qrModal').style.display =
     'flex';
 
@@ -1085,13 +1105,48 @@ function showQR(receiverName,amount){
     receiver.qrImage;
 
   document.getElementById('payAmount').innerText =
-    '฿' + amount;
+    amount.toLocaleString() + ' kip';
 }
 
-function closeQRModal(){
+async function submitSlip(){
 
-  document.getElementById('qrModal').style.display =
-    'none';
+  const file =
+    document.getElementById('slipUpload').files[0];
+
+  if(!file){
+
+    alert('อัปโหลดสลิปก่อน');
+
+    return;
+  }
+
+  const fileName =
+    Date.now() + '_' + file.name;
+
+  const storageRef =
+    storage.ref(
+      `slips/${roomId}/${fileName}`
+    );
+
+  await storageRef.put(file);
+
+  const url =
+    await storageRef.getDownloadURL();
+
+  await db.ref(`rooms/${roomId}/payments`).push({
+
+    from: myName,
+    to: currentReceiver,
+    amount: currentAmount,
+    slipUrl: url,
+    status: 'pending',
+    createdAt: Date.now()
+
+  });
+
+  alert('แจ้งการจ่ายแล้ว ✅');
+
+  closeQRModal();
 }
 
 function setTip(pct,btn){
@@ -1118,6 +1173,5 @@ function copyRoomLink(){
 }
 
 </script>
-
 </body>
 </html>
