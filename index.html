@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>หารบิล 💸</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --primary: #6C63FF;
+    --primary-light: #EEEDff;
+    --accent: #FF6584;
+    --green: #43C59E;
+    --green-light: #E1F5EE;
+    --red: #FF6584;
+    --red-light: #FFEEF2;
+    --bg: #F7F6FF;
+    --card: #FFFFFF;
+    --text: #2D2B55;
+    --muted: #9896B8;
+    --border: #E8E7F5;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(108,99,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Prompt', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 24px 20px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    top: -60px; right: -40px;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    bottom: -30px; left: -20px;
+  }
+  .header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  .header p { font-size: 14px; opacity: 0.75; margin-top: 4px; font-weight: 300; }
+  .room-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 99px; padding: 4px 14px;
+    font-size: 13px; margin-top: 10px;
+    cursor: pointer;
+  }
+  .container { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .icon { font-size: 18px; }
+  input, select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Prompt', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .btn {
+    display: block; width: 100%;
+    padding: 13px;
+    background: var(--primary);
+    color: white;
+    border: none; border-radius: 10px;
+    font-family: 'Prompt', sans-serif;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: scale(0.98); }
+  .btn.secondary {
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .friends-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .friend-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .friend-chip .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600;
+  }
+  .item-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .item-info { flex: 1; }
+  .item-name { font-size: 14px; font-weight: 500; }
+  .item-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .item-amount { font-size: 15px; font-weight: 600; color: var(--primary); }
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 18px; padding: 4px;
+    transition: color 0.15s;
+  }
+  .del-btn:hover { color: var(--red); }
+  .summary-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  .summary-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; flex-shrink: 0;
+  }
+  .summary-info { flex: 1; }
+  .summary-name { font-size: 14px; font-weight: 500; }
+  .summary-label { font-size: 13px; margin-top: 2px; }
+  .summary-amount { font-size: 16px; font-weight: 600; }
+  .total-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0 0;
+    border-top: 1.5px dashed var(--border);
+    margin-top: 4px;
+  }
+  .total-label { font-size: 14px; color: var(--muted); }
+  .total-amount { font-size: 22px; font-weight: 600; color: var(--primary); }
+  .tip-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tip-btn {
+    padding: 7px 14px; border-radius: 99px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    font-family: 'Prompt', sans-serif;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--text);
+    transition: all 0.15s;
+  }
+  .tip-btn.active {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .online-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #43C59E; display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .empty { text-align: center; padding: 20px; color: var(--muted); font-size: 14px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #joinSection { text-align: center; padding: 40px 20px; }
+  #joinSection h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  #joinSection p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .share-box {
+    background: var(--primary-light);
+    border: 1.5px dashed var(--primary);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .share-box:hover { opacity: 0.8; }
+  .share-url { font-size: 13px; color: var(--primary); word-break: break-all; }
+  .copied { font-size: 12px; color: var(--green); margin-top: 4px; display: none; }
+  .section-hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- JOIN/CREATE ROOM -->
+<div id="joinSection">
+  <div style="font-size: 48px; margin-bottom: 12px;">💸</div>
+  <h2>หารบิลกับเพื่อน</h2>
+  <p>สร้างห้องแล้วแชร์ link ให้เพื่อนเข้ามาได้เลย!</p>
+  <div class="container">
+    <input type="text" id="nameInput" placeholder="ชื่อของคุณ..." style="margin-bottom: 12px;" />
+    <div class="row2" style="margin-bottom: 12px;">
+      <button class="btn" onclick="createRoom()">➕ สร้างห้องใหม่</button>
+      <button class="btn secondary" onclick="showJoinBox()">🔗 เข้าร่วมห้อง</button>
+    </div>
+    <div id="joinBox" class="section-hidden">
+      <input type="text" id="roomCodeInput" placeholder="ใส่รหัสห้อง..." />
+      <button class="btn" onclick="joinRoom()">เข้าร่วม</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="section-hidden">
+  <div class="header">
+    <h1>💸 หารบิล</h1>
+    <p id="tripName">กำลังโหลด...</p>
+    <div class="room-badge" onclick="copyRoomLink()">
+      <span class="online-dot"></span>
+      <span id="roomCodeDisplay">---</span>
+      <span style="font-size:11px; opacity:0.7;">กด copy link</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- MEMBERS -->
+    <div class="card">
+      <div class="card-title"><span class="icon">👥</span> สมาชิกในห้อง</div>
+      <div id="membersList" class="friends-wrap">
+        <span style="font-size:13px; color:var(--muted);">รอสมาชิก...</span>
+      </div>
+    </div>
+
+    <!-- ADD ITEM -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🧾</span> เพิ่มรายการ</div>
+      <input type="text" id="itemName" placeholder="ชื่อรายการ เช่น ข้าวเย็น, แท็กซี่..." />
+      <input type="number" id="itemAmount" placeholder="จำนวนเงิน (บาท)" />
+      <div style="margin-bottom: 10px;">
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">จ่ายโดย</div>
+        <div id="payerSelect" class="friends-wrap"><span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span></div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">หารกับใคร</div>
+        <div id="splitSelect" class="friends-wrap"><span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span></div>
+      </div>
+      <button class="btn" onclick="addItem()">+ เพิ่มรายการ</button>
+    </div>
+
+    <!-- TIP -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🎉</span> ทิปเพิ่ม</div>
+      <div class="tip-wrap" id="tipWrap">
+        <button class="tip-btn active" onclick="setTip(0,this)">ไม่ทิป</button>
+        <button class="tip-btn" onclick="setTip(5,this)">5%</button>
+        <button class="tip-btn" onclick="setTip(10,this)">10%</button>
+        <button class="tip-btn" onclick="setTip(15,this)">15%</button>
+        <button class="tip-btn" onclick="setTip(20,this)">20%</button>
+      </div>
+    </div>
+
+    <!-- ITEMS LIST -->
+    <div class="card" id="itemsCard" style="display:none;">
+      <div class="card-title"><span class="icon">📋</span> รายการทั้งหมด</div>
+      <div id="itemsList"></div>
+      <div class="total-bar">
+        <span class="total-label">รวมทั้งหมด</span>
+        <span class="total-amount" id="grandTotal">฿0</span>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="card" id="summaryCard" style="display:none;">
+      <div class="card-title"><span class="icon">💰</span> สรุปใครจ่ายเท่าไหร่</div>
+      <div id="summaryList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div id="shareModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; display:none; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:white; border-radius:20px; padding:24px; width:100%; max-width:380px;">
+    <div style="font-size:20px; font-weight:600; margin-bottom:8px;">🔗 แชร์ให้เพื่อน</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">ส่ง link นี้ใน LINE กลุ่มได้เลย!</p>
+    <div class="share-box" onclick="copyLink()">
+      <div class="share-url" id="shareUrl"></div>
+      <div class="copied" id="copiedMsg">✅ คัดลอกแล้ว!</div>
+    </div>
+    <button class="btn" onclick="closeModal()">ปิด</button>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  databaseURL: "https://split-bill-a0006-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const colors = [
+  { bg: '#EEEDff', border: '#AFA9EC', text: '#3C3489' },
+  { bg: '#E1F5EE', border: '#5DCAA5', text: '#085041' },
+  { bg: '#FAEEDA', border: '#EF9F27', text: '#633806' },
+  { bg: '#FBEAF0', border: '#ED93B1', text: '#4B1528' },
+  { bg: '#FAECE7', border: '#F0997B', text: '#4A1B0C' },
+  { bg: '#EAF3DE', border: '#97C459', text: '#173404' },
+];
+
+let roomId = null;
+let myName = null;
+let members = [];
+let items = [];
+let selectedPayer = null;
+let selectedSplit = new Set();
+let tipPct = 0;
+
+function getColor(i) { return colors[i % colors.length]; }
+function initials(n) { return n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+
+// Check URL for room code
+window.onload = () => {
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get('room');
+  if (room) {
+    document.getElementById('roomCodeInput').value = room;
+    document.getElementById('joinBox').style.display = 'block';
+  }
+};
+
+function createRoom() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) { alert('ใส่ชื่อของคุณก่อนนะ'); return; }
+  myName = name;
+  roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  db.ref(`rooms/${roomId}/members/${name}`).set({ name, joinedAt: Date.now() });
+  startListening();
+}
+
+function showJoinBox() {
+  document.getElementById('joinBox').style.display = 'block';
+}
+
+function joinRoom() {
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if (!name) { alert('ใส่ชื่อของคุณก่อนนะ'); return; }
+  if (!code) { alert('ใส่รหัสห้องด้วยนะ'); return; }
+  myName = name;
+  roomId = code;
+  db.ref(`rooms/${roomId}`).once('value', snap => {
+    if (!snap.exists()) { alert('ไม่เจอห้องนี้ ลองเช็ครหัสใหม่นะ'); return; }
+    db.ref(`rooms/${roomId}/members/${name}`).set({ name, joinedAt: Date.now() });
+    startListening();
+  });
+}
+
+function startListening() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('room', roomId);
+  window.history.replaceState({}, '', url);
+
+  document.getElementById('joinSection').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('roomCodeDisplay').textContent = roomId;
+  document.getElementById('tripName').textContent = `ห้อง: ${roomId}`;
+
+  db.ref(`rooms/${roomId}/members`).on('value', snap => {
+    members = [];
+    snap.forEach(child => members.push(child.val().name));
+    renderMembers();
+    renderPayerSelect();
+    renderSplitSelect();
+    renderSummary();
+  });
+
+  db.ref(`rooms/${roomId}/items`).on('value', snap => {
+    items = [];
+    snap.forEach(child => items.push({ id: child.key, ...child.val() }));
+    renderItems();
+    renderSummary();
+  });
+}
+
+function renderMembers() {
+  const el = document.getElementById('membersList');
+  if (!members.length) { el.innerHTML = '<span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span>'; return; }
+  el.innerHTML = members.map((m, i) => {
+    const c = getColor(i);
+    const isMe = m === myName;
+    return `<span class="friend-chip" style="background:${c.bg}; border-color:${c.border}; color:${c.text};">
+      <span class="avatar" style="background:${c.text}; color:${c.bg};">${initials(m)}</span>
+      ${m}${isMe ? ' (คุณ)' : ''}
+    </span>`;
+  }).join('');
+}
+
+function renderPayerSelect() {
+  const el = document.getElementById('payerSelect');
+  if (!members.length) { el.innerHTML = '<span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span>'; return; }
+  el.innerHTML = members.map((m, i) => {
+    const c = getColor(i);
+    const active = selectedPayer === m;
+    return `<span class="friend-chip" onclick="selectPayer('${m}')"
+      style="background:${active?c.bg:'#F7F6FF'}; border-color:${active?c.border:'var(--border)'}; color:${active?c.text:'var(--muted)'};">
+      <span class="avatar" style="background:${active?c.text:'#ccc'}; color:white;">${initials(m)}</span>${m}
+    </span>`;
+  }).join('');
+}
+
+function selectPayer(name) { selectedPayer = name; renderPayerSelect(); }
+
+function renderSplitSelect() {
+  const el = document.getElementById('splitSelect');
+  if (!members.length) { el.innerHTML = '<span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span>'; return; }
+  el.innerHTML = members.map((m, i) => {
+    const c = getColor(i);
+    const active = selectedSplit.has(m);
+    return `<span class="friend-chip" onclick="toggleSplit('${m}')"
+      style="background:${active?c.bg:'#F7F6FF'}; border-color:${active?c.border:'var(--border)'}; color:${active?c.text:'var(--muted)'};">
+      <span class="avatar" style="background:${active?c.text:'#ccc'}; color:white;">${initials(m)}</span>${m}
+    </span>`;
+  }).join('');
+}
+
+function toggleSplit(name) {
+  if (selectedSplit.has(name)) selectedSplit.delete(name);
+  else selectedSplit.add(name);
+  renderSplitSelect();
+}
+
+function addItem() {
+  const name = document.getElementById('itemName').value.trim();
+  const amount = parseFloat(document.getElementById('itemAmount').value);
+  if (!name || isNaN(amount) || amount <= 0) { alert('กรอกชื่อรายการและจำนวนเงินด้วยนะ'); return; }
+  if (!selectedPayer) { alert('เลือกว่าใครจ่ายก่อน'); return; }
+  if (selectedSplit.size === 0) { alert('เลือกว่าหารกับใครบ้าง'); return; }
+  db.ref(`rooms/${roomId}/items`).push({
+    name, amount, payer: selectedPayer,
+    split: [...selectedSplit],
+    addedBy: myName,
+    createdAt: Date.now()
+  });
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemAmount').value = '';
+  selectedPayer = null;
+  selectedSplit.clear();
+  renderPayerSelect();
+  renderSplitSelect();
+}
+
+function removeItem(id) {
+  db.ref(`rooms/${roomId}/items/${id}`).remove();
+}
+
+function setTip(pct, btn) {
+  tipPct = pct;
+  document.querySelectorAll('.tip-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSummary();
+}
+
+function renderItems() {
+  const card = document.getElementById('itemsCard');
+  const list = document.getElementById('itemsList');
+  const total = document.getElementById('grandTotal');
+  if (!items.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const sum = items.reduce((a, it) => a + it.amount, 0);
+  total.textContent = '฿' + Math.round(sum).toLocaleString();
+  list.innerHTML = items.map(it => {
+    const fi = members.indexOf(it.payer);
+    const c = fi >= 0 ? getColor(fi) : colors[0];
+    return `<div class="item-row">
+      <div class="item-avatar" style="background:${c.bg}; color:${c.text};">${initials(it.payer)}</div>
+      <div class="item-info">
+        <div class="item-name">${it.name}</div>
+        <div class="item-sub">${it.payer} จ่าย · หารกับ ${it.split.join(', ')}</div>
+      </div>
+      <div class="item-amount">฿${Math.round(it.amount).toLocaleString()}</div>
+      <button class="del-btn" onclick="removeItem('${it.id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary() {
+  const card = document.getElementById('summaryCard');
+  const list = document.getElementById('summaryList');
+  if (!items.length || !members.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const owes = {};
+  members.forEach(m => owes[m] = 0);
+  items.forEach(it => {
+    const tip = it.amount * (tipPct / 100);
+    const total = it.amount + tip;
+    const share = total / it.split.length;
+    it.split.forEach(m => {
+      if (owes[m] === undefined) owes[m] = 0;
+      owes[m] += share;
+      if (m === it.payer) owes[m] -= total;
+    });
+    if (!it.split.includes(it.payer)) owes[it.payer] -= total;
+  });
+  list.innerHTML = members.map((m, i) => {
+    const c = getColor(i);
+    const val = owes[m] || 0;
+    const owing = val > 0.5;
+    const receiving = val < -0.5;
+    let bg, textColor, label, amountColor;
+    if (owing) {
+      bg = '#FFEEF2'; textColor = '#c0395b'; amountColor = '#FF6584';
+      label = `ต้องจ่ายเพิ่ม`;
+    } else if (receiving) {
+      bg = '#E1F5EE'; textColor = '#085041'; amountColor = '#43C59E';
+      label = `ได้รับเงินคืน`;
+    } else {
+      bg = '#F7F6FF'; textColor = 'var(--muted)'; amountColor = 'var(--muted)';
+      label = `เสมอกัน ✓`;
+    }
+    const absVal = Math.abs(Math.round(val));
+    return `<div class="summary-row" style="background:${bg};">
+      <div class="summary-avatar" style="background:${c.bg}; color:${c.text};">${initials(m)}</div>
+      <div class="summary-info">
+        <div class="summary-name">${m}${m===myName?' (คุณ)':''}</div>
+        <div class="summary-label" style="color:${textColor};">${label}</div>
+      </div>
+      <div class="summary-amount" style="color:${amountColor};">${owing||receiving?'฿'+absVal.toLocaleString():''}</div>
+    </div>`;
+  }).join('');
+}
+
+function copyRoomLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('✅ คัดลอก link แล้ว! ส่งให้เพื่อนได้เลย');
+  });
+}
+
+function copyLink() {
+  const url = document.getElementById('shareUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    document.getElementById('copiedMsg').style.display = 'block';
+    setTimeout(() => document.getElementById('copiedMsg').style.display = 'none', 2000);
+  });
+}
+
+function closeModal() {
+  document.getElementById('shareModal').style.display = 'none';
+}
+</script>
+</body>
+</html>
