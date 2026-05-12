@@ -501,6 +501,21 @@ input{
       <div id="summaryList"></div>
 
     </div>
+<div class="card">
+
+  <div class="card-title">
+    🔔 การแจ้งจ่ายเงิน
+  </div>
+
+  <div id="paymentNotifications">
+
+    <div style="color:gray;font-size:13px;">
+      ยังไม่มีการแจ้งจ่าย
+    </div>
+
+  </div>
+
+</div>
 
   </div>
 
@@ -746,6 +761,18 @@ function startListening(){
     renderSummary();
 
   });
+
+db.ref(`rooms/${roomId}/payments`).on('value',snap=>{
+
+  renderPayments(snap);
+
+});
+
+db.ref(`rooms/${roomId}/payments`).on('value',snap=>{
+
+  renderPayments(snap);
+
+});
 
 }
 
@@ -1045,6 +1072,89 @@ function findReceiver(){
 
   return receiver;
 }
+
+function renderPayments(snap){
+
+  const el =
+    document.getElementById('paymentNotifications');
+
+  if(!snap.exists()){
+
+    el.innerHTML = `
+
+      <div style="
+        color:gray;
+        font-size:13px;
+      ">
+
+        ยังไม่มีการแจ้งจ่าย
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  let html = '';
+
+  snap.forEach(child=>{
+
+    const p = child.val();
+
+    html += `
+
+      <div style="
+        border:1px solid #eee;
+        border-radius:14px;
+        padding:14px;
+        margin-bottom:10px;
+      ">
+
+        <div style="
+          font-weight:600;
+        ">
+
+          ${p.from} → ${p.to}
+
+        </div>
+
+        <div style="
+          margin-top:6px;
+        ">
+
+          ฿${p.amount}
+
+        </div>
+
+        <img
+          src="${p.slipUrl}"
+          style="
+            width:100%;
+            border-radius:12px;
+            margin-top:10px;
+          "
+        >
+
+        <div style="
+          margin-top:10px;
+          color:#FF6584;
+          font-weight:600;
+        ">
+
+          ⏳ รอยืนยัน
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  el.innerHTML = html;
+}
+
 
 function uploadQR(){
 
