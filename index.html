@@ -3,321 +3,562 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>หารบิล 💸</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
-  :root {
-    --primary: #6C63FF;
-    --primary-light: #EEEDff;
-    --accent: #FF6584;
-    --green: #43C59E;
-    --green-light: #E1F5EE;
-    --red: #FF6584;
-    --red-light: #FFEEF2;
-    --bg: #F7F6FF;
-    --card: #FFFFFF;
-    --text: #2D2B55;
-    --muted: #9896B8;
-    --border: #E8E7F5;
-    --radius: 16px;
-    --shadow: 0 4px 24px rgba(108,99,255,0.08);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Prompt', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 40px;
-  }
-  .header {
-    background: var(--primary);
-    color: white;
-    padding: 24px 20px 32px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    top: -60px; right: -40px;
-  }
-  .header::after {
-    content: '';
-    position: absolute;
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-    bottom: -30px; left: -20px;
-  }
-  .header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
-  .header p { font-size: 14px; opacity: 0.75; margin-top: 4px; font-weight: 300; }
-  .room-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,0.18);
-    border-radius: 99px; padding: 4px 14px;
-    font-size: 13px; margin-top: 10px;
-    cursor: pointer;
-  }
-  .container { max-width: 480px; margin: 0 auto; padding: 0 16px; }
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-top: 16px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-  }
-  .card-title {
-    font-size: 15px; font-weight: 600;
-    margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .card-title .icon { font-size: 18px; }
-  input, select {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-family: 'Prompt', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--bg);
-    margin-bottom: 10px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  input:focus, select:focus { border-color: var(--primary); }
-  input[type=number] { -moz-appearance: textfield; }
-  input[type=number]::-webkit-outer-spin-button,
-  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .btn {
-    display: block; width: 100%;
-    padding: 13px;
-    background: var(--primary);
-    color: white;
-    border: none; border-radius: 10px;
-    font-family: 'Prompt', sans-serif;
-    font-size: 15px; font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-  .btn:hover { opacity: 0.88; }
-  .btn:active { transform: scale(0.98); }
-  .btn.secondary {
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-  .friends-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .friend-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px;
-    border-radius: 99px;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    border: 1.5px solid transparent;
-    transition: all 0.15s;
-  }
-  .friend-chip .avatar {
-    width: 22px; height: 22px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 600;
-  }
-  .item-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .item-row:last-child { border-bottom: none; }
-  .item-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; flex-shrink: 0;
-  }
-  .item-info { flex: 1; }
-  .item-name { font-size: 14px; font-weight: 500; }
-  .item-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .item-amount { font-size: 15px; font-weight: 600; color: var(--primary); }
-  .del-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--muted); font-size: 18px; padding: 4px;
-    transition: color 0.15s;
-  }
-  .del-btn:hover { color: var(--red); }
-  .summary-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-  }
-  .summary-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 600; flex-shrink: 0;
-  }
-  .summary-info { flex: 1; }
-  .summary-name { font-size: 14px; font-weight: 500; }
-  .summary-label { font-size: 13px; margin-top: 2px; }
-  .summary-amount { font-size: 16px; font-weight: 600; }
-  .total-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 0 0;
-    border-top: 1.5px dashed var(--border);
-    margin-top: 4px;
-  }
-  .total-label { font-size: 14px; color: var(--muted); }
-  .total-amount { font-size: 22px; font-weight: 600; color: var(--primary); }
-  .tip-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
-  .tip-btn {
-    padding: 7px 14px; border-radius: 99px;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    font-family: 'Prompt', sans-serif;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer; color: var(--text);
-    transition: all 0.15s;
-  }
-  .tip-btn.active {
-    background: var(--primary-light);
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-  .online-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #43C59E; display: inline-block;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .empty { text-align: center; padding: 20px; color: var(--muted); font-size: 14px; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  #joinSection { text-align: center; padding: 40px 20px; }
-  #joinSection h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
-  #joinSection p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
-  .share-box {
-    background: var(--primary-light);
-    border: 1.5px dashed var(--primary);
-    border-radius: 12px;
-    padding: 14px;
-    text-align: center;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .share-box:hover { opacity: 0.8; }
-  .share-url { font-size: 13px; color: var(--primary); word-break: break-all; }
-  .copied { font-size: 12px; color: var(--green); margin-top: 4px; display: none; }
-  .section-hidden { display: none; }
+
+:root{
+  --primary:#6C63FF;
+  --primary-light:#EEEDff;
+  --accent:#FF6584;
+  --green:#43C59E;
+  --green-light:#E1F5EE;
+  --red:#FF6584;
+  --red-light:#FFEEF2;
+  --bg:#F7F6FF;
+  --card:#FFFFFF;
+  --text:#2D2B55;
+  --muted:#9896B8;
+  --border:#E8E7F5;
+  --radius:16px;
+  --shadow:0 4px 24px rgba(108,99,255,0.08);
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:'Prompt',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:40px;
+}
+
+.header{
+  background:var(--primary);
+  color:white;
+  padding:24px 20px 32px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.header::before{
+  content:'';
+  position:absolute;
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  top:-60px;
+  right:-40px;
+}
+
+.header::after{
+  content:'';
+  position:absolute;
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.06);
+  bottom:-30px;
+  left:-20px;
+}
+
+.header h1{
+  font-size:26px;
+  font-weight:600;
+}
+
+.header p{
+  font-size:14px;
+  opacity:0.75;
+  margin-top:4px;
+}
+
+.room-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,0.18);
+  border-radius:99px;
+  padding:4px 14px;
+  font-size:13px;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.container{
+  max-width:480px;
+  margin:0 auto;
+  padding:0 16px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-top:16px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+
+.card-title{
+  font-size:15px;
+  font-weight:600;
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+input{
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  font-family:'Prompt',sans-serif;
+  font-size:14px;
+  color:var(--text);
+  background:var(--bg);
+  margin-bottom:10px;
+  outline:none;
+}
+
+.btn{
+  display:block;
+  width:100%;
+  padding:13px;
+  background:var(--primary);
+  color:white;
+  border:none;
+  border-radius:10px;
+  font-family:'Prompt',sans-serif;
+  font-size:15px;
+  font-weight:500;
+  cursor:pointer;
+}
+
+.btn.secondary{
+  background:var(--primary-light);
+  color:var(--primary);
+}
+
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.friends-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.friend-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 14px;
+  border-radius:99px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  background:#f8f8ff;
+  transition:0.2s;
+}
+
+.active-chip{
+  background:#6C63FF !important;
+  color:white !important;
+  border-color:#6C63FF !important;
+}
+
+.item-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.summary-row{
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:10px;
+  background:#f8f8ff;
+}
+
+.tip-wrap{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.tip-btn{
+  padding:7px 14px;
+  border-radius:99px;
+  border:1.5px solid var(--border);
+  background:var(--bg);
+  cursor:pointer;
+}
+
+.tip-btn.active{
+  background:var(--primary-light);
+  border-color:var(--primary);
+  color:var(--primary);
+}
+
+.online-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#43C59E;
+}
+
+.section-hidden{
+  display:none;
+}
+
 </style>
 </head>
+
 <body>
 
-<!-- JOIN/CREATE ROOM -->
+<!-- JOIN -->
+
 <div id="joinSection">
-  <div style="font-size: 48px; margin-bottom: 12px;">💸</div>
-  <h2>หารบิลกับเพื่อน</h2>
-  <p>สร้างห้องแล้วแชร์ link ให้เพื่อนเข้ามาได้เลย!</p>
-  <div class="container">
-    <input type="text" id="nameInput" placeholder="ชื่อของคุณ..." style="margin-bottom: 12px;" />
-    <div class="row2" style="margin-bottom: 12px;">
-      <button class="btn" onclick="createRoom()">➕ สร้างห้องใหม่</button>
-      <button class="btn secondary" onclick="showJoinBox()">🔗 เข้าร่วมห้อง</button>
+
+  <div style="text-align:center;padding:40px 20px;">
+
+    <div style="font-size:48px;margin-bottom:12px;">
+      💸
     </div>
-    <div id="joinBox" class="section-hidden">
-      <input type="text" id="roomCodeInput" placeholder="ใส่รหัสห้อง..." />
-      <button class="btn" onclick="joinRoom()">เข้าร่วม</button>
+
+    <h2>หารบิลกับเพื่อน</h2>
+
+    <p style="margin-top:8px;color:var(--muted);">
+      สร้างห้องแล้วแชร์ให้เพื่อน
+    </p>
+
+    <div class="container">
+
+      <input
+        type="text"
+        id="nameInput"
+        placeholder="ชื่อของคุณ..."
+      >
+
+      <div class="row2">
+
+        <button
+          class="btn"
+          onclick="createRoom()">
+
+          ➕ สร้างห้อง
+        </button>
+
+        <button
+          class="btn secondary"
+          onclick="showJoinBox()">
+
+          🔗 เข้าร่วม
+        </button>
+
+      </div>
+
+      <div
+        id="joinBox"
+        class="section-hidden"
+        style="margin-top:12px;">
+
+        <input
+          type="text"
+          id="roomCodeInput"
+          placeholder="รหัสห้อง..."
+        >
+
+        <button
+          class="btn"
+          onclick="joinRoom()">
+
+          เข้าร่วมห้อง
+        </button>
+
+      </div>
+
     </div>
+
   </div>
+
 </div>
 
-<!-- MAIN APP -->
+<!-- MAIN -->
+
 <div id="mainApp" class="section-hidden">
+
   <div class="header">
+
     <h1>💸 หารบิล</h1>
+
     <p id="tripName">กำลังโหลด...</p>
-    <div class="room-badge" onclick="copyRoomLink()">
+
+    <div
+      class="room-badge"
+      onclick="copyRoomLink()">
+
       <span class="online-dot"></span>
-      <span id="roomCodeDisplay">---</span>
-      <span style="font-size:11px; opacity:0.7;">กด copy link</span>
+
+      <span id="roomCodeDisplay">
+        ---
+      </span>
+
     </div>
+
   </div>
 
   <div class="container">
 
     <!-- MEMBERS -->
+
     <div class="card">
-      <div class="card-title"><span class="icon">👥</span> สมาชิกในห้อง</div>
-      <div id="membersList" class="friends-wrap">
-        <span style="font-size:13px; color:var(--muted);">รอสมาชิก...</span>
+
+      <div class="card-title">
+        👥 สมาชิกในห้อง
       </div>
+
+      <div
+        id="membersList"
+        class="friends-wrap">
+      </div>
+
+    </div>
+
+    <!-- QR -->
+
+    <div class="card">
+
+      <div class="card-title">
+        🏦 QR รับเงินของคุณ
+      </div>
+
+      <input
+        type="file"
+        id="qrUpload"
+        accept="image/*"
+      >
+
+      <button
+        class="btn"
+        onclick="uploadQR()">
+
+        อัปโหลด QR
+      </button>
+
+      <div id="myQRPreview"></div>
+
     </div>
 
     <!-- ADD ITEM -->
+
     <div class="card">
-      <div class="card-title"><span class="icon">🧾</span> เพิ่มรายการ</div>
-      <input type="text" id="itemName" placeholder="ชื่อรายการ เช่น ข้าวเย็น, แท็กซี่..." />
-      <input type="number" id="itemAmount" placeholder="จำนวนเงิน (บาท)" />
-      <div style="margin-bottom: 10px;">
-        <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">จ่ายโดย</div>
-        <div id="payerSelect" class="friends-wrap"><span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span></div>
+
+      <div class="card-title">
+        🧾 เพิ่มรายการ
       </div>
-      <div style="margin-bottom: 14px;">
-        <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">หารกับใคร</div>
-        <div id="splitSelect" class="friends-wrap"><span style="font-size:13px;color:var(--muted);">รอสมาชิก...</span></div>
+
+      <input
+        type="text"
+        id="itemName"
+        placeholder="ชื่อรายการ"
+      >
+
+      <input
+        type="number"
+        id="itemAmount"
+        placeholder="จำนวนเงิน"
+      >
+
+      <div style="margin-bottom:10px;">
+
+        <div style="font-size:13px;margin-bottom:6px;">
+          จ่ายโดย
+        </div>
+
+        <div
+          id="payerSelect"
+          class="friends-wrap">
+        </div>
+
       </div>
-      <button class="btn" onclick="addItem()">+ เพิ่มรายการ</button>
+
+      <div style="margin-bottom:14px;">
+
+        <div style="font-size:13px;margin-bottom:6px;">
+          หารกับใคร
+        </div>
+
+        <div
+          id="splitSelect"
+          class="friends-wrap">
+        </div>
+
+      </div>
+
+      <button
+        class="btn"
+        onclick="addItem()">
+
+        + เพิ่มรายการ
+      </button>
+
     </div>
 
     <!-- TIP -->
+
     <div class="card">
-      <div class="card-title"><span class="icon">🎉</span> ทิปเพิ่ม</div>
-      <div class="tip-wrap" id="tipWrap">
-        <button class="tip-btn active" onclick="setTip(0,this)">ไม่ทิป</button>
-        <button class="tip-btn" onclick="setTip(5,this)">5%</button>
-        <button class="tip-btn" onclick="setTip(10,this)">10%</button>
-        <button class="tip-btn" onclick="setTip(15,this)">15%</button>
-        <button class="tip-btn" onclick="setTip(20,this)">20%</button>
+
+      <div class="card-title">
+        🎉 ทิปเพิ่ม
       </div>
+
+      <div class="tip-wrap">
+
+        <button
+          class="tip-btn active"
+          onclick="setTip(0,this)">
+          ไม่ทิป
+        </button>
+
+        <button
+          class="tip-btn"
+          onclick="setTip(5,this)">
+          5%
+        </button>
+
+        <button
+          class="tip-btn"
+          onclick="setTip(10,this)">
+          10%
+        </button>
+
+        <button
+          class="tip-btn"
+          onclick="setTip(15,this)">
+          15%
+        </button>
+
+        <button
+          class="tip-btn"
+          onclick="setTip(20,this)">
+          20%
+        </button>
+
+      </div>
+
     </div>
 
-    <!-- ITEMS LIST -->
-    <div class="card" id="itemsCard" style="display:none;">
-      <div class="card-title"><span class="icon">📋</span> รายการทั้งหมด</div>
-      <div id="itemsList"></div>
-      <div class="total-bar">
-        <span class="total-label">รวมทั้งหมด</span>
-        <span class="total-amount" id="grandTotal">฿0</span>
+    <!-- ITEMS -->
+
+    <div
+      class="card"
+      id="itemsCard"
+      style="display:none;">
+
+      <div class="card-title">
+        📋 รายการทั้งหมด
       </div>
+
+      <div id="itemsList"></div>
+
     </div>
 
     <!-- SUMMARY -->
-    <div class="card" id="summaryCard" style="display:none;">
-      <div class="card-title"><span class="icon">💰</span> สรุปใครจ่ายเท่าไหร่</div>
+
+    <div
+      class="card"
+      id="summaryCard"
+      style="display:none;">
+
+      <div class="card-title">
+        💰 สรุป
+      </div>
+
       <div id="summaryList"></div>
+
     </div>
 
   </div>
+
 </div>
 
-<!-- SHARE MODAL -->
-<div id="shareModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:999; display:none; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:white; border-radius:20px; padding:24px; width:100%; max-width:380px;">
-    <div style="font-size:20px; font-weight:600; margin-bottom:8px;">🔗 แชร์ให้เพื่อน</div>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">ส่ง link นี้ใน LINE กลุ่มได้เลย!</p>
-    <div class="share-box" onclick="copyLink()">
-      <div class="share-url" id="shareUrl"></div>
-      <div class="copied" id="copiedMsg">✅ คัดลอกแล้ว!</div>
+<!-- QR MODAL -->
+
+<div
+id="qrModal"
+style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+z-index:9999;
+align-items:center;
+justify-content:center;
+padding:20px;
+">
+
+  <div style="
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    width:100%;
+    max-width:360px;
+    text-align:center;
+  ">
+
+    <h2>สแกนเพื่อจ่าย</h2>
+
+    <img
+      id="qrImage"
+      style="
+        width:220px;
+        margin-top:12px;
+        border-radius:14px;
+      "
+    >
+
+    <div
+      id="payAmount"
+      style="
+        font-size:24px;
+        font-weight:600;
+        margin-top:14px;
+        color:#6C63FF;
+      ">
     </div>
-    <button class="btn" onclick="closeModal()">ปิด</button>
+
+    <button
+      class="btn"
+      style="margin-top:16px;"
+      onclick="closeQRModal()">
+
+      ปิด
+    </button>
+
   </div>
+
 </div>
 
 <script>
@@ -340,6 +581,8 @@ let items = [];
 
 let selectedPayer = null;
 let selectedSplit = new Set();
+
+let tipPct = 0;
 
 window.onload = () => {
 
@@ -497,7 +740,7 @@ function renderMembers(){
 
       ${m}
 
-      ${m === roomOwner ? '👑' : ''}
+      ${m === roomOwner ? ' 👑' : ''}
 
     </div>
 
@@ -512,7 +755,9 @@ function renderPayerSelect(){
   el.innerHTML = members.map(m=>`
 
     <div
-      class="friend-chip"
+      class="friend-chip
+      ${selectedPayer === m ? 'active-chip' : ''}"
+
       onclick="selectPayer('${m}')">
 
       ${m}
@@ -525,6 +770,8 @@ function renderPayerSelect(){
 function selectPayer(name){
 
   selectedPayer = name;
+
+  renderPayerSelect();
 }
 
 function renderSplitSelect(){
@@ -535,7 +782,9 @@ function renderSplitSelect(){
   el.innerHTML = members.map(m=>`
 
     <div
-      class="friend-chip"
+      class="friend-chip
+      ${selectedSplit.has(m) ? 'active-chip' : ''}"
+
       onclick="toggleSplit('${m}')">
 
       ${m}
@@ -548,10 +797,15 @@ function renderSplitSelect(){
 function toggleSplit(name){
 
   if(selectedSplit.has(name)){
+
     selectedSplit.delete(name);
+
   }else{
+
     selectedSplit.add(name);
   }
+
+  renderSplitSelect();
 }
 
 function addItem(){
@@ -593,6 +847,9 @@ function addItem(){
 
   selectedPayer = null;
   selectedSplit.clear();
+
+  renderPayerSelect();
+  renderSplitSelect();
 
 }
 
@@ -658,25 +915,21 @@ function renderSummary(){
 
   members.forEach(m=>owes[m]=0);
 
-  // =========================
-  // LOGIC ใหม่ถูกต้อง
-  // คนจ่ายก็หารด้วย
-  // =========================
-
   items.forEach(it=>{
 
-    const share =
-      it.amount / it.split.length;
+    const total =
+      it.amount + (it.amount * tipPct / 100);
 
-    // ทุกคนที่ร่วมหาร
+    const share =
+      total / it.split.length;
+
     it.split.forEach(m=>{
 
       owes[m] += share;
 
     });
 
-    // คนจ่ายสำรองก่อน
-    owes[it.payer] -= it.amount;
+    owes[it.payer] -= total;
 
   });
 
@@ -738,14 +991,13 @@ function findReceiver(){
 
   members.forEach(m=>owes[m]=0);
 
-  // =========================
-  // LOGIC ใหม่ถูกต้อง
-  // =========================
-
   items.forEach(it=>{
 
+    const total =
+      it.amount + (it.amount * tipPct / 100);
+
     const share =
-      it.amount / it.split.length;
+      total / it.split.length;
 
     it.split.forEach(m=>{
 
@@ -753,7 +1005,7 @@ function findReceiver(){
 
     });
 
-    owes[it.payer] -= it.amount;
+    owes[it.payer] -= total;
 
   });
 
@@ -842,6 +1094,18 @@ function closeQRModal(){
     'none';
 }
 
+function setTip(pct,btn){
+
+  tipPct = pct;
+
+  document.querySelectorAll('.tip-btn')
+    .forEach(b=>b.classList.remove('active'));
+
+  btn.classList.add('active');
+
+  renderSummary();
+}
+
 function copyRoomLink(){
 
   const url =
@@ -854,5 +1118,6 @@ function copyRoomLink(){
 }
 
 </script>
+
 </body>
 </html>
